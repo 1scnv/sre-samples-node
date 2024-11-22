@@ -1,0 +1,18 @@
+{
+  "name": "sre-samples-node",
+  "version": "1.0.0",
+  "description": "Este material contempla exemplos práticos de uso de técnicas essenciais em aplicações, afim de garantir a confiabilidade, resiliência, escalabilidade e alta disponibilidade.",
+  "main": "server-bulkhead.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cockatiel": "^3.2.1",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "opossum": "^8.3.1"
+  }
+}

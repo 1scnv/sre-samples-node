@@ -110,9 +110,17 @@ Ajustar configurações de timeout e corrigir erro de timeout execedido ao invoc
 
 ![Screen Shot 2024-09-13 at 21 42 04](https://github.com/user-attachments/assets/a451d1a1-ef3f-4116-8ab0-246d6548b7a3)
 
-```
-// INSIRA SUA ANÁLISE OU PARECER ABAIXO
+```js
+// Uma solução simples é aumentar o limite do timeout para 6000ms se o serviço externo sempre levar 6 segundos porém essa solução pode não ser adequada caso o tempo de resposta do serviço externo seja inconsistente.
 
+app.get('/api/timeout', async (req, res) => {
+    try {
+        const result = await timeoutPromise(6000, externalService()); // Timeout ajustado para 6 segundos
+        res.send(result);
+    } catch (error) {
+        res.status(500).send(`Erro: ${error.message}`);
+    }
+});
 
 
 ```
@@ -177,9 +185,25 @@ Alterar limite de requisições permitidas para 100 num intervalo de 1 minuto e 
 ![Screen Shot 2024-09-13 at 22 51 23](https://github.com/user-attachments/assets/6407456d-9bb5-41bb-ba17-9cc4a5272d29)
 
 
-```
-// INSIRA SUA ANÁLISE OU PARECER ABAIXO
+```js
+// Parâmetro `max`da função rateLimit() foi alterado de 5 para 100 se o serviço precisa suportar um volume maior de requisições porém isso pode não ser adequado se for necessário garantir a estabilidade utilizando proteção alto volume de acesso
 
+// Middleware de rate limiting (Limite de 100 requisições por minuto)
+const limiter = rateLimit({
+    windowMs: 60 * 1000,  // 1 minuto
+    max: 100,  // Limite de 100 requisições
+    message: 'Você excedeu o limite de requisições, tente novamente mais tarde.',
+});
+
+// Função para simular múltiplas requisições
+function simulateRequests() {
+    for (let i = 0; i < 105; i++) {
+        fetch('http://localhost:8080/api/ratelimit')
+            .then(response => response.text())
+            .then(data => console.log(data))
+            .catch(error => console.log('Erro:', error));
+    }
+}
 
 
 ```
@@ -244,10 +268,11 @@ Aumentar quantidade de chamadas simultâneas e avaliar o comportamento.
 **BÔNUS**: implementar método que utilizando threads para realizar as chamadas e logar na tela 
 
 
-```
-// INSIRA SUA ANÁLISE OU PARECER ABAIXO
+```js
+// Para aumentar a quantidade de chamads simuntâneas é necessário ajustar a configuração do bulkhead para permitir mais requisições no mesmo tempo.
+// Este recurso pode gerar sobrecarga em recursos caso o sistema precise limitar as chamadas simultâneas
 
-
+const bulkheadPolicy = bulkhead(5);
 
 ```
 
@@ -325,9 +350,18 @@ curl localhost:8080/api/circuitbreaker
 Ajustar o o percentual de falhas para que o circuit breaker obtenha sucesso ao receber as requisições após sua abertura.
 Observar comportamento do circuito no console.
 
-```
-// INSIRA SUA ANÁLISE OU PARECER ABAIXO
+```js
+// Ajustando o parâmetro `errorThresholdPercentage` para um valor menor permite que o circuit breaker consiga voltar ao seu estado de sucesso mais rápido, o que permite maior restrição a falhas porém não é indicado se for necessário garantir que o circuito abra apenas após um número maior de falhas
 
+// com a configuração abaixo o limite de falhas fica em 30%
+
+
+// Configuração do Circuit Breaker
+const breaker = new CircuitBreaker(externalService, {
+    timeout: 3000,  // Tempo limite de 3 segundos para a chamada
+    errorThresholdPercentage: 30,  // Abre o circuito se 30% das requisições falharem
+    resetTimeout: 10000  // Tenta fechar o circuito após 10 segundos
+});
 
 
 ```
